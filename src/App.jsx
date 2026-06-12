@@ -108,7 +108,9 @@ export default function App() {
     setStatus("loading");
     setCurrent(null);
     try {
-      const res = await fetch(`/data/${num}.json`);
+      // BASE_URL keeps this correct under a subpath (…/quran-similarities/) as
+      // well as at the domain root, matching the relative `base` in vite.config.
+      const res = await fetch(`${import.meta.env.BASE_URL}data/${num}.json`);
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
 
