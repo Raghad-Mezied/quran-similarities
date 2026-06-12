@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>المتشابهات اللفظية في القرآن</title>
+  <style>
+    :root { --ink:#1F3864; --accent:#9c2a2a; --red:#C00000; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      margin: 0; color: #222;
+      background: #f5f3ee;
+    }
+    header {
+      background: var(--ink); color: #fff; padding: 18px 22px;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 4px; font-size: 22px; }
+    header p { margin: 0; opacity: .8; font-size: 14px; }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
+
+    /* surah buttons grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+    .surah-btn {
+      cursor: pointer; border: 1px solid #d8d2c4; border-radius: 8px;
+      background: #fff; padding: 8px 6px; text-align: center;
+      transition: .12s; font-family: inherit;
+    }
+    .surah-btn:hover { border-color: var(--ink); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .surah-btn .num {
+      display: inline-block; min-width: 22px; font-weight: 700;
+      color: var(--ink); font-size: 13px;
+    }
+    .surah-btn .name { display: block; font-size: 15px; margin-top: 2px; }
+    .surah-btn.active { background: var(--ink); border-color: var(--ink); }
+    .surah-btn.active .num, .surah-btn.active .name { color: #fff; }
+
+    .toolbar {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .toolbar h2 { margin: 0; font-size: 18px; color: var(--ink); flex: 1; }
+    .btn {
+      cursor: pointer; border: none; border-radius: 8px; padding: 10px 16px;
+      font-family: inherit; font-size: 14px; font-weight: 600; color: #fff;
+      background: var(--accent);
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:disabled { background: #bbb; cursor: not-allowed; }
+    .hint { color: #777; font-size: 13px; }
+
+    /* ===== document preview (mirrors the generated Word file) ===== */
+    .doc {
+      background: #fff; border: 1px solid #e2ddd2; border-radius: 10px;
+      padding: 28px 32px; min-height: 200px;
+      font-family: "Traditional Arabic", "Amiri", "Scheherazade New", "Times New Roman", serif;
+      font-size: 20px; line-height: 1.9;
+    }
+    .doc .title {
+      text-align: center; color: var(--ink); font-size: 26px; font-weight: 700;
+      border-bottom: 2px solid var(--accent); padding-bottom: 8px; margin: 0 0 18px;
+    }
+    .cols { width: 100%; border-collapse: collapse; }
+    .cols td.col { width: 50%; vertical-align: top; padding: 0 14px; }
+    .cols td.divider { width: 1px; background: var(--accent); padding: 0; }
+
+    .block { margin: 0 0 18px; }
+    .block .main {
+      text-align: right; font-weight: 700; color: #9c2a2a; margin: 14px 0 4px;
+    }
+    .block .comment { text-align: right; color: #777; font-size: 15px; margin: 0 0 4px; }
+    .block ul { margin: 0; padding-inline-start: 24px; list-style: disc; }
+    .block li { margin: 3px 0; text-align: right; }
+    .ref { color: var(--red); font-weight: 700; }
+    .empty { text-align:center; color:#999; padding: 40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>المتشابهات اللفظية في القرآن الكريم</h1>
+    <p>اختر السورة لتوليد ملف Word بمتشابهاتها — ١ إلى ١١٤</p>
+  </header>
+
+  <div class="wrap">
+    <div class="grid" id="grid"></div>
+
+    <div class="toolbar">
+      <h2 id="docTitle">اختر سورة من الأعلى…</h2>
+      <span class="hint" id="count"></span>
+      <button class="btn" id="downloadBtn" disabled>⬇️ تحميل ملف Word</button>
+    </div>
+
+    <div class="doc" id="doc">
+      <div class="empty">اضغط على رقم السورة لعرض المتشابهات وتوليد ملف Word.</div>
+    </div>
+  </div>
+
+  <script>
+    // Surah names in mushaf order (index 0 => surah 1)
+    const SURAHS = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"];
+
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+    // Render the coloured segments of a verse (content[] = [{red:"..."},{black:"..."}])
+    function renderSegments(content) {
+      if (!Array.isArray(content) || !content.length) return "";
+      return content.map(seg => {
+        const color = Object.keys(seg)[0];
+        const text = seg[color];
+        const css = (color === "unknown") ? "#888" : color; // 'unknown' => the "..." elision
+        return `<span style="color:${css}">${esc(text)}</span>`;
+      }).join(" ");
+    }
+
+    // Turn one surah's JSON into { title, blocksHtml: [..] } — only verses that HAVE similarities
+    function buildBlocks(data) {
+      const blocks = [];
+      for (const verse of (data || [])) {
+        const els = verse.elements || [];
+        const main = els.find(e => !e.sim_chapter_name) || els[0];
+        const sims = els.filter(e => e.sim_chapter_name);
+        if (!main || !sims.length) continue; // skip verses with no similar verse
+
+        const mainText = (Array.isArray(main.content) && main.content.length)
+          ? main.content.map(seg => esc(seg[Object.keys(seg)[0]])).join(" ")
+          : esc(main.text_uthmani || "");
+        let html = `<div class="block">`;
+        html += `<p class="main">( ${mainText} )</p>`;
+        if (main.comment) html += `<p class="comment">${esc(main.comment)}</p>`;
+        html += `<ul>`;
+        for (const s of sims) {
+          const t = renderSegments(s.content) || esc(s.text_uthmani || "");
+          // format:  - surah name  aya number : ( aya )
+          html += `<li><span class="ref">${esc(s.sim_chapter_name)} ${esc(s.sim_verse_number)}</span> : ( ${t} )</li>`;
+        }
+        html += `</ul></div>`;
+        blocks.push(html);
+      }
+      return blocks;
+    }
+
+    // Assemble the full document body (title + two balanced columns)
+    function buildDocBody(num, blocks) {
+      const name = SURAHS[num - 1] || ("سورة " + num);
+      const title = `متشابهات سورة ${name}`;
+      let body = `<h1 class="title">${esc(title)}</h1>`;
+      if (!blocks.length) {
+        body += `<div class="empty">لا توجد آيات متشابهة في هذه السورة.</div>`;
+        return { title, body };
+      }
+      // split in half — right column gets the first half (RTL reading order)
+      const mid = Math.ceil(blocks.length / 2);
+      const right = blocks.slice(0, mid).join("");
+      const left = blocks.slice(mid).join("");
+      body += `<table class="cols" dir="rtl"><tr>`
+            + `<td class="col">${right}</td>`
+            + `<td class="divider"></td>`
+            + `<td class="col">${left}</td>`
+            + `</tr></table>`;
+      return { title, body };
+    }
+
+    // Download a real .docx generated by the server (opens in Pages, Word & Google Docs)
+    function downloadWord(num) {
+      const a = document.createElement("a");
+      a.href = `/word/${num}`;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // ---- app state ----
+    let current = null; // { num, title, body }
+
+    const grid = document.getElementById("grid");
+    const docEl = document.getElementById("doc");
+    const docTitle = document.getElementById("docTitle");
+    const countEl = document.getElementById("count");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    // build the 114 buttons
+    for (let n = 1; n <= 114; n++) {
+      const b = document.createElement("button");
+      b.className = "surah-btn";
+      b.innerHTML = `<span class="num">${n}</span><span class="name">${SURAHS[n - 1]}</span>`;
+      b.addEventListener("click", () => selectSurah(n, b));
+      grid.appendChild(b);
+    }
+
+    async function selectSurah(num, btn) {
+      document.querySelectorAll(".surah-btn.active").forEach(e => e.classList.remove("active"));
+      btn.classList.add("active");
+
+      docTitle.textContent = "…جارٍ التحميل";
+      docEl.innerHTML = `<div class="empty">…جارٍ تحميل بيانات سورة ${SURAHS[num - 1]}</div>`;
+      downloadBtn.disabled = true;
+
+      try {
+        const res = await fetch(`/data/${num}.json`);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        const blocks = buildBlocks(data);
+        const { title, body } = buildDocBody(num, blocks);
+
+        current = { num, title, body };
+        docEl.innerHTML = body;
+        docTitle.textContent = title;
+        countEl.textContent = blocks.length ? `${blocks.length} موضعًا به متشابهات` : "";
+        downloadBtn.disabled = false;
+
+        // The request: pressing the surah button generates the Word file.
+        downloadWord(num);
+      } catch (err) {
+        docEl.innerHTML = `<div class="empty">تعذّر تحميل البيانات: ${esc(err.message)}</div>`;
+        docTitle.textContent = "خطأ";
+      }
+    }
+
+    downloadBtn.addEventListener("click", () => {
+      if (current) downloadWord(current.num);
+    });
+  </script>
+</body>
+</html>
