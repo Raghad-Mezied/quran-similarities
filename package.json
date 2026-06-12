@@ -1,18 +1,21 @@
 {
-  "name": "node",
-  "version": "1.0.0",
-  "description": "",
+  "name": "quran-similarities",
+  "version": "2.0.0",
+  "description": "Quran verbal similarities (المتشابهات اللفظية) — static React app, no backend",
   "license": "ISC",
-  "author": "",
   "type": "module",
-  "main": "script1.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "docx": "^9.7.1",
-    "express": "^5.2.1",
-    "nodemon": "^3.1.14"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.7"
   }
 }

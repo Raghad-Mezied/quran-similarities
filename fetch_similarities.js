@@ -1,4 +1,4 @@
-// Fetch similarities_new/1.json .. 114.json and save them to ./data
+// Fetch similarities_new/1.json .. 114.json and save them to ./public/data
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const BASE_URL = "https://hefzmoyaser.com/data/similarities_new";
-const OUT_DIR = path.join(__dirname, "data");
+const OUT_DIR = path.join(__dirname, "public", "data");
 const START = 1;
 const END = 114;
 
