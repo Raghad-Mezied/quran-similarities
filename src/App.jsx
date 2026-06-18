@@ -118,6 +118,8 @@ export default function App() {
       const title = `متشابهات سورة ${SURAHS[num - 1] || "سورة " + num}`;
       setCurrent({ num, title, blocks, data });
       setStatus("idle");
+      // document.title drives the default filename when saving the print as PDF.
+      document.title = title;
 
       // The original behaviour: pressing the surah button also generates the Word file.
       await downloadWord(num, data);
@@ -140,7 +142,7 @@ export default function App() {
     <>
       <header>
         <h1>المتشابهات اللفظية في القرآن الكريم</h1>
-        <p>اختر السورة لتوليد ملف Word بمتشابهاتها — ١ إلى ١١٤</p>
+        <p>اختر السورة لعرض متشابهاتها وتحميلها Word أو PDF — ١ إلى ١١٤</p>
       </header>
 
       <div className="wrap">
@@ -174,6 +176,13 @@ export default function App() {
           >
             ⬇️ تحميل ملف Word
           </button>
+          <button
+            className="btn pdf"
+            disabled={!current}
+            onClick={() => window.print()}
+          >
+            🖨️ حفظ PDF
+          </button>
         </div>
 
         <div className="doc">
@@ -190,7 +199,12 @@ export default function App() {
               اضغط على رقم السورة لعرض المتشابهات وتوليد ملف Word.
             </div>
           )}
-          {status === "idle" && current && <Preview blocks={current.blocks} />}
+          {status === "idle" && current && (
+            <>
+              <h3 className="title">{current.title}</h3>
+              <Preview blocks={current.blocks} />
+            </>
+          )}
         </div>
       </div>
     </>

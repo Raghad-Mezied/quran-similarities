@@ -8,12 +8,8 @@ import {
   TextRun,
   AlignmentType,
   BorderStyle,
-  Table,
-  TableRow,
-  TableCell,
-  TableLayoutType,
-  WidthType,
-  VerticalAlign,
+  SectionType,
+  ColumnBreak,
 } from "docx";
 import { SURAHS, colorHex } from "./surah-data.js";
 
@@ -29,10 +25,13 @@ function contentRuns(content, fallback, extra = {}) {
       }),
     ];
   }
-  return content.map((seg) => {
+  return content.map((seg, i) => {
     const color = Object.keys(seg)[0];
+    // Space separates segments, but the LAST segment gets none — otherwise a
+    // trailing space sits between the last word and the closing ornate bracket ﴾.
+    const sep = i === content.length - 1 ? "" : " ";
     return new TextRun({
-      text: seg[color] + " ",
+      text: seg[color] + sep,
       color: colorHex(color),
       rightToLeft: true,
       font: "Arial",
@@ -60,48 +59,16 @@ export async function buildDocx(num, data) {
   const title = `متشابهات سورة ${name}`;
   const blocks = buildBlocks(data);
 
-  // Shared table geometry. Pages only right-aligns text inside an RTL table —
-  // NOT in a standalone paragraph — so even the title goes in a table cell.
-  const COL_W = 4500; // ~half the usable page width (works for Letter & A4)
-  const TABLE_W = COL_W * 2;
-  const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
-
-  // A full-width single-cell RTL table — used to force right-alignment on
-  // content that isn't part of the 2-column grid (title, messages).
-  const fullWidthBox = (paras, bottomBorder) =>
-    new Table({
-      visuallyRightToLeft: true,
-      alignment: AlignmentType.RIGHT,
-      layout: TableLayoutType.FIXED,
-      columnWidths: [TABLE_W],
-      width: { size: TABLE_W, type: WidthType.DXA },
-      borders: {
-        top: noBorder,
-        left: noBorder,
-        right: noBorder,
-        insideHorizontal: noBorder,
-        insideVertical: noBorder,
-        bottom: bottomBorder || noBorder,
-      },
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: TABLE_W, type: WidthType.DXA },
-              margins: { top: 40, bottom: 100, left: 140, right: 140 },
-              children: paras,
-            }),
-          ],
-        }),
-      ],
-    });
-
   // Pages ignores jc=center on import (it aligns purely by text direction), so a
   // centered title is not achievable from the file — right-aligned is the clean,
-  // reliable RTL choice. The maroon underline is the box's bottom border.
+  // reliable RTL choice. The maroon underline is the paragraph's bottom border.
   const titlePara = new Paragraph({
     alignment: AlignmentType.RIGHT,
     bidirectional: true,
+    spacing: { after: 200 },
+    border: {
+      bottom: { style: BorderStyle.SINGLE, size: 12, color: "9C2A2A", space: 4 },
+    },
     children: [
       new TextRun({
         text: title,
@@ -112,12 +79,6 @@ export async function buildDocx(num, data) {
         font: "Arial",
       }),
     ],
-  });
-
-  const titleBox = fullWidthBox([titlePara], {
-    style: BorderStyle.SINGLE,
-    size: 12,
-    color: "9C2A2A",
   });
 
   // Turn one block (a main verse + its similar verses) into right-aligned paragraphs.
@@ -132,7 +93,9 @@ export async function buildDocx(num, data) {
       new Paragraph({
         alignment: AlignmentType.RIGHT,
         bidirectional: true,
-        spacing: { before: 120, after: 20 },
+        // Larger `before` puts a clear gap above each group's header, so the
+        // groups of similarities read as visually separated blocks.
+        spacing: { before: 320, after: 20 },
         children: [
           new TextRun({
             text: `( ${mainText} )`,
@@ -190,11 +153,19 @@ export async function buildDocx(num, data) {
     return paras;
   }
 
-  const children = [titleBox];
+  // The title spans the full page width; the verses below flow in two newspaper
+  // columns with a vertical rule between them. So we use two sections: a
+  // single-column one for the title, then a CONTINUOUS two-column one (continuous
+  // keeps it on the same page rather than starting a new one) for the content.
+  const titleSection = { children: [titlePara] };
 
+  let contentSection;
   if (!blocks.length) {
-    children.push(
-      fullWidthBox([
+    // No similarities — a single full-width message, no columns (matches the old
+    // full-width box).
+    contentSection = {
+      properties: { type: SectionType.CONTINUOUS },
+      children: [
         new Paragraph({
           alignment: AlignmentType.RIGHT,
           bidirectional: true,
@@ -207,55 +178,34 @@ export async function buildDocx(num, data) {
             }),
           ],
         }),
-      ]),
-    );
+      ],
+    };
   } else {
-    // Split the blocks into two balanced halves — a real 2-column table (like the
-    // web preview). First half reads first, so it goes in the RIGHT column.
+    // Split the blocks into two balanced halves. Word fills the LEFT column
+    // first (it lays newspaper columns out left-to-right regardless of the RTL
+    // text), so to keep Arabic reading order — first half on the RIGHT — we put
+    // the SECOND half before the column break (→ left column) and the FIRST half
+    // after it (→ right column). A reader's eye starts on the right and reads the
+    // first half first.
     const mid = Math.ceil(blocks.length / 2);
-    const rightParas = blocks.slice(0, mid).flatMap(blockParagraphs);
-    const leftParas = blocks.slice(mid).flatMap(blockParagraphs);
-    if (!leftParas.length) leftParas.push(new Paragraph({ text: "" }));
+    const firstHalf = blocks.slice(0, mid).flatMap(blockParagraphs);
+    const secondHalf = blocks.slice(mid).flatMap(blockParagraphs);
 
-    const cell = (paras) =>
-      new TableCell({
-        width: { size: COL_W, type: WidthType.DXA },
-        verticalAlign: VerticalAlign.TOP,
-        margins: {
-          top: 80,
-          bottom: 40,
-          left: 250,
-          right: 250,
-        },
-        children: paras,
-      });
+    const contentParas = [
+      ...secondHalf,
+      new Paragraph({ children: [new ColumnBreak()] }),
+      ...firstHalf,
+    ];
 
-    // RTL table (bidiVisual). This is the Word/Pages standard for right-to-left
-    // tables: cells lay out right-to-left (first cell = right column) AND cell
-    // content is right-aligned. Without it, Pages treats the table as LTR and
-    // left-aligns everything.
-    children.push(
-      new Table({
-        visuallyRightToLeft: true,
-        alignment: AlignmentType.RIGHT,
-        layout: TableLayoutType.FIXED,
-        columnWidths: [COL_W, COL_W],
-        width: { size: COL_W * 2, type: WidthType.DXA },
-        borders: {
-          top: noBorder,
-          bottom: noBorder,
-          left: noBorder,
-          right: noBorder,
-          insideHorizontal: noBorder,
-          insideVertical: {
-            style: BorderStyle.SINGLE,
-            size: 2,
-            color: "C08080",
-          },
-        },
-        rows: [new TableRow({ children: [cell(rightParas), cell(leftParas)] })],
-      }),
-    );
+    contentSection = {
+      properties: {
+        type: SectionType.CONTINUOUS,
+        // count: 2 → two equal columns; separate: true → draw the dividing line;
+        // space → gap between the columns (in twips).
+        column: { count: 2, space: 540, separate: true, equalWidth: true },
+      },
+      children: contentParas,
+    };
   }
 
   const doc = new Document({
@@ -275,7 +225,7 @@ export async function buildDocx(num, data) {
         },
       },
     },
-    sections: [{ children }],
+    sections: [titleSection, contentSection],
   });
 
   return { title, blob: await Packer.toBlob(doc) };

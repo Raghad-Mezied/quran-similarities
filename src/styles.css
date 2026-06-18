@@ -62,7 +62,9 @@ header p { margin: 0; opacity: .8; font-size: 14px; }
 }
 .cols { width: 100%; border-collapse: collapse; }
 .cols td.col { width: 50%; vertical-align: top; padding: 0 14px; }
-.cols td.divider { width: 1px; background: var(--accent); padding: 0; }
+/* A border (not a background) so the dividing line survives printing — browsers
+   drop background colours in print by default but always render borders. */
+.cols td.divider { width: 0; padding: 0; border-inline-start: 1.5px solid var(--accent); }
 
 .block { margin: 0 0 18px; }
 .block .main {
@@ -73,3 +75,16 @@ header p { margin: 0; opacity: .8; font-size: 14px; }
 .block li { margin: 3px 0; text-align: right; }
 .ref { color: var(--red); font-weight: 700; }
 .empty { text-align:center; color:#999; padding: 40px; }
+
+/* ===== print / "Save as PDF" — print only the document, full width ===== */
+@media print {
+  @page { size: A4; margin: 1.4cm; }
+  body { background: #fff; }
+  header, .grid, .toolbar { display: none !important; }
+  .wrap { max-width: none; margin: 0; padding: 0; }
+  .doc {
+    border: none; border-radius: 0; padding: 0; min-height: 0;
+  }
+  /* keep colours/borders crisp in the PDF */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
