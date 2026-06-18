@@ -98,7 +98,7 @@ export async function buildDocx(num, data) {
         spacing: { before: 320, after: 20 },
         children: [
           new TextRun({
-            text: `( ${mainText} )`,
+            text: `(${mainText})`,
             bold: true,
             color: "9C2A2A",
             size: 28,
@@ -143,7 +143,7 @@ export async function buildDocx(num, data) {
               rightToLeft: true,
               font: "Arial",
             }),
-            new TextRun({ text: " : ﴿", rightToLeft: true, font: "Arial" }),
+            new TextRun({ text: ":﴿", rightToLeft: true, font: "Arial" }),
             ...contentRuns(s.content, s.text_uthmani),
             new TextRun({ text: "﴾", rightToLeft: true, font: "Arial" }),
           ],

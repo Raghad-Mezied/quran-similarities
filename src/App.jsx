@@ -28,9 +28,12 @@ function Segments({ content, fallback }) {
     const color = Object.keys(seg)[0];
     // 'unknown' marks the "…" elision — render it grey, like the colour map does.
     const css = color === "unknown" ? "#888" : color;
+    // Space between segments, but none after the last — so the last word sits
+    // tight against the closing bracket.
+    const sep = i === content.length - 1 ? "" : " ";
     return (
       <span key={i} style={{ color: css }}>
-        {seg[color]}{" "}
+        {seg[color]}{sep}
       </span>
     );
   });
@@ -39,15 +42,15 @@ function Segments({ content, fallback }) {
 function Block({ block }) {
   return (
     <div className="block">
-      <p className="main">( {block.mainText} )</p>
+      <p className="main">({block.mainText})</p>
       {block.comment && <p className="comment">{block.comment}</p>}
       <ul>
         {block.sims.map((s, i) => (
           <li key={i}>
             <span className="ref">
               {s.sim_chapter_name} {s.sim_verse_number}
-            </span>{" "}
-            : ( <Segments content={s.content} fallback={s.text_uthmani} /> )
+            </span>
+            :(<Segments content={s.content} fallback={s.text_uthmani} />)
           </li>
         ))}
       </ul>
